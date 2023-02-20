@@ -31,6 +31,8 @@ type staticMap struct {
 	shardSet                 sharding.ShardSet
 	hostShardSets            []HostShardSet
 	hostShardSetsByID        map[string]HostShardSet
+	leavingHostMap           map[string]map[uint32]string
+	initializingHostMap      map[string]map[uint32]string
 	orderedHosts             []Host
 	hostsByShard             [][]Host
 	orderedShardHostsByShard [][]orderedShardHost
@@ -46,6 +48,8 @@ func NewStaticMap(opts StaticOptions) Map {
 		shardSet:                 opts.ShardSet(),
 		hostShardSets:            hostShardSets,
 		hostShardSetsByID:        make(map[string]HostShardSet),
+		leavingHostMap:           make(map[string]map[uint32]string),
+		initializingHostMap:      make(map[string]map[uint32]string),
 		orderedHosts:             make([]Host, 0, len(hostShardSets)),
 		hostsByShard:             make([][]Host, totalShards),
 		orderedShardHostsByShard: make([][]orderedShardHost, totalShards),
@@ -57,8 +61,15 @@ func NewStaticMap(opts StaticOptions) Map {
 		host := hostShardSet.Host()
 		topoMap.hostShardSetsByID[host.ID()] = hostShardSet
 		topoMap.orderedHosts = append(topoMap.orderedHosts, host)
+		shardIDToLeavingHost := make(map[uint32]string)
 		for _, shard := range hostShardSet.ShardSet().All() {
 			id := shard.ID()
+			shardIDToInitializingHost := make(map[uint32]string)
+			shardIDToInitializingHost[shard.ID()] = host.ID()
+			if shard.SourceID() != "" {
+				shardIDToLeavingHost[shard.ID()] = shard.SourceID()
+				topoMap.initializingHostMap[shard.SourceID()] = shardIDToInitializingHost
+			}
 			topoMap.hostsByShard[id] = append(topoMap.hostsByShard[id], host)
 			elem := orderedShardHost{
 				idx:   idx,
@@ -68,6 +79,7 @@ func NewStaticMap(opts StaticOptions) Map {
 			topoMap.orderedShardHostsByShard[id] =
 				append(topoMap.orderedShardHostsByShard[id], elem)
 		}
+		topoMap.leavingHostMap[host.ID()] = shardIDToLeavingHost
 	}
 
 	return &topoMap
@@ -85,6 +97,24 @@ func (t *staticMap) Hosts() []Host {
 
 func (t *staticMap) HostShardSets() []HostShardSet {
 	return t.hostShardSets
+}
+
+func (t *staticMap) LookupLeavingHost(hostID string, id uint32) (string, bool) {
+	value, ok := t.leavingHostMap[hostID]
+	if !ok {
+		return "", false
+	}
+	parentHost, ok := value[id]
+	return parentHost, ok
+}
+
+func (t *staticMap) LookupInitializingHost(hostID string, id uint32) (string, bool) {
+	value, ok := t.initializingHostMap[hostID]
+	if !ok {
+		return "", false
+	}
+	childHost, ok := value[id]
+	return childHost, ok
 }
 
 func (t *staticMap) LookupHostShardSet(id string) (HostShardSet, bool) {

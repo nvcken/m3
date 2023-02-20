@@ -118,6 +118,10 @@ type Configuration struct {
 	// count towards consistency, by default they do not.
 	ShardsLeavingCountTowardsConsistency *bool `yaml:"shardsLeavingCountTowardsConsistency"`
 
+	// ShardsLeavingAndInitiazingCountTowardsConsistency sets whether or not writes to leaving and initializing shards
+	// count towards consistency, by default they do not.
+	ShardsLeavingAndInitiazingCountTowardsConsistency *bool `yaml:"shardsLeavingAndInitiazingCountTowardsConsistency"`
+
 	// IterateEqualTimestampStrategy specifies the iterate equal timestamp strategy.
 	IterateEqualTimestampStrategy *encoding.IterateEqualTimestampStrategy `yaml:"iterateEqualTimestampStrategy"`
 }
@@ -205,6 +209,11 @@ func (c *Configuration) Validate() error {
 	if c.AsyncWriteMaxConcurrency != nil && *c.AsyncWriteMaxConcurrency <= 0 {
 		return fmt.Errorf("m3db client async write max concurrency was: %d but must be >0",
 			*c.AsyncWriteMaxConcurrency)
+	}
+
+	if c.ShardsLeavingCountTowardsConsistency != nil && c.ShardsLeavingAndInitiazingCountTowardsConsistency != nil &&
+		*c.ShardsLeavingCountTowardsConsistency && *c.ShardsLeavingAndInitiazingCountTowardsConsistency {
+		return fmt.Errorf("m3db client cannot have both ShardsLeavingCountTowardsConsistency and ShardsLeavingAndInitiazingCountTowardsConsistency as true")
 	}
 
 	if err := c.Proto.Validate(); err != nil {
@@ -443,6 +452,10 @@ func (c Configuration) NewAdminClient(
 	if c.WriteShardsInitializing != nil {
 		v = v.SetWriteShardsInitializing(*c.WriteShardsInitializing)
 	}
+	if c.ShardsLeavingAndInitiazingCountTowardsConsistency != nil {
+		v = v.SetShardsLeavingAndInitiazingCountTowardsConsistency(*c.ShardsLeavingAndInitiazingCountTowardsConsistency)
+	}
+
 	if c.ShardsLeavingCountTowardsConsistency != nil {
 		v = v.SetShardsLeavingCountTowardsConsistency(*c.ShardsLeavingCountTowardsConsistency)
 	}

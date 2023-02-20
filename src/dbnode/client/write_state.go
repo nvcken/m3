@@ -49,17 +49,19 @@ type writeState struct {
 	sync.Mutex
 	refCounter
 
-	consistencyLevel                     topology.ConsistencyLevel
-	shardsLeavingCountTowardsConsistency bool
-	topoMap                              topology.Map
-	op                                   writeOp
-	nsID                                 ident.ID
-	tsID                                 ident.ID
-	tagEncoder                           serialize.TagEncoder
-	annotation                           checked.Bytes
-	majority, pending                    int32
-	success                              int32
-	errors                               []error
+	consistencyLevel                                  topology.ConsistencyLevel
+	shardsLeavingCountTowardsConsistency              bool
+	shardsLeavingAndInitiazingCountTowardsConsistency bool
+	topoMap                                           topology.Map
+	hostSucessMap                                     map[string]bool
+	op                                                writeOp
+	nsID                                              ident.ID
+	tsID                                              ident.ID
+	tagEncoder                                        serialize.TagEncoder
+	annotation                                        checked.Bytes
+	majority, pending                                 int32
+	success                                           int32
+	errors                                            []error
 
 	queues         []hostQueue
 	tagEncoderPool serialize.TagEncoderPool
@@ -145,7 +147,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 		// NB(r): If shard is leaving and configured to allow writes to leaving
 		// shards to count towards consistency then allow that to count
 		// to success.
-		if !available && !leavingAndShardsLeavingCountTowardsConsistency {
+		if !available && !leavingAndShardsLeavingCountTowardsConsistency && !w.shardsLeavingAndInitiazingCountTowardsConsistency {
 			var errStr string
 			switch shardState {
 			case shard.Initializing:
@@ -156,6 +158,34 @@ func (w *writeState) completionFn(result interface{}, err error) {
 				errStr = "shard %d in host %s not available (unknown state)"
 			}
 			wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+		} else if !available && w.shardsLeavingAndInitiazingCountTowardsConsistency {
+			var errStr string
+			switch shardState {
+			case shard.Initializing:
+				pairedHostID, ok := w.topoMap.LookupLeavingHost(hostID, w.op.ShardID())
+				if !ok {
+					errStr = "shard %d in host %s has no leaving shard"
+					wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+				} else {
+					if w.hostSucessMap[pairedHostID] {
+						w.success++
+					}
+					w.hostSucessMap[hostID] = true
+				}
+			case shard.Leaving:
+				pairedHostID, ok := w.topoMap.LookupInitializingHost(hostID, w.op.ShardID())
+				if !ok {
+					errStr = "shard %d in host %s has no initializing shard"
+					wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+				} else {
+					if w.hostSucessMap[pairedHostID] {
+						w.success++
+					}
+					w.hostSucessMap[hostID] = true
+				}
+			default:
+				errStr = "shard %d in host %s not available (unknown state)"
+			}
 		} else {
 			w.success++
 		}
