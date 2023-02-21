@@ -169,6 +169,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 				} else {
 					if w.hostSucessMap[pairedHostID] {
 						w.success++
+						fmt.Printf("replace node success: %d", w.success)
 					}
 					w.hostSucessMap[hostID] = true
 				}
@@ -180,6 +181,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 				} else {
 					if w.hostSucessMap[pairedHostID] {
 						w.success++
+						fmt.Printf("replace node success: %d", w.success)
 					}
 					w.hostSucessMap[hostID] = true
 				}

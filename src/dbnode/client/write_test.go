@@ -22,14 +22,14 @@ package client
 
 import (
 	"errors"
-	"sync"
-	"testing"
-
 	"github.com/m3db/m3/src/cluster/shard"
 	tterrors "github.com/m3db/m3/src/dbnode/network/server/tchannelthrift/errors"
+	"github.com/m3db/m3/src/dbnode/sharding"
 	"github.com/m3db/m3/src/dbnode/topology"
 	"github.com/m3db/m3/src/x/checked"
 	xerrors "github.com/m3db/m3/src/x/errors"
+	"sync"
+	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -119,7 +119,7 @@ func TestShardNotAvailable(t *testing.T) {
 
 	wState, s, hosts := writeTestSetup(t, &writeWg)
 	setShardStates(t, s, hosts[0], shard.Initializing)
-	wState.completionFn(host, nil)
+	wState.completionFn(hosts[0], nil)
 	retryabilityCheck(t, wState, xerrors.IsRetryableError)
 	writeTestTeardown(wState, &writeWg)
 }
@@ -135,23 +135,69 @@ func TestShardLeavingWithShardsLeavingCountTowardsConsistency(t *testing.T) {
 	writeTestTeardown(wState, &writeWg)
 }
 
-func TestShardLeavingAndInitializingCountTowardsConsistency(t *testing.T) {
+func TestShardLeavingAndInitializingCountTowardsConsistencyWithTrueFlag(t *testing.T) {
 	var writeWg sync.WaitGroup
 
-	wState, s, hosts := writeTestSetup(t, &writeWg)
-	wState.shardsLeavingAndInitiazingCountTowardsConsistency = true
-	setShardStates(t, s, hosts[0], shard.Leaving)
-	setShardStates(t, s, hosts[1], shard.Initializing)
-	wState.completionFn(hosts[0], nil)
-	wState.completionFn(hosts[1], nil)
+	wState, s, _ := writeTestSetup(t, &writeWg)
+
+	setupShardLeavingAndInitializingCountTowardsConsistency(t, wState, s, true)
+	wState.completionFn(s.state.topoMap.Hosts()[1], nil)
+	wState.incRef()
+	wState.completionFn(s.state.topoMap.Hosts()[0], nil)
 	assert.Equal(t, int32(1), wState.success)
 	writeTestTeardown(wState, &writeWg)
+}
+
+func TestShardLeavingAndInitializingCountTowardsConsistencyWithFalseFlag(t *testing.T) {
+	var writeWg sync.WaitGroup
+
+	wState, s, _ := writeTestSetup(t, &writeWg)
+
+	setupShardLeavingAndInitializingCountTowardsConsistency(t, wState, s, false)
+	wState.completionFn(s.state.topoMap.Hosts()[1], nil)
+	wState.incRef()
+	wState.completionFn(s.state.topoMap.Hosts()[0], nil)
+	assert.Equal(t, int32(0), wState.success)
+	writeTestTeardown(wState, &writeWg)
+}
+
+func setupShardLeavingAndInitializingCountTowardsConsistency(t *testing.T, wState *writeState, s *session, LeavingAndInitializingFlag bool) {
+
+	var hostShardSets []topology.HostShardSet
+	for _, host := range s.state.topoMap.Hosts() {
+		hostShard, _ := sharding.NewShardSet(
+			sharding.NewShards([]uint32{0, 1, 2}, shard.Available),
+			sharding.DefaultHashFn(3),
+		)
+		hostShardSet := topology.NewHostShardSet(host, hostShard)
+		hostShardSets = append(hostShardSets, hostShardSet)
+	}
+	opts := topology.NewStaticOptions().
+		SetShardSet(s.state.topoMap.ShardSet()).
+		SetReplicas(3).
+		SetHostShardSets(hostShardSets)
+	m := topology.NewStaticMap(opts)
+	s.state.topoMap = m
+	wState.topoMap = m // update topology with hostshards options
+
+	replaceHost(t, s, s.state.topoMap.Hosts()[0], s.state.topoMap.Hosts()[1]) // mark leaving shards in host0 and init in host1
+
+	opts = topology.NewStaticOptions().
+		SetShardSet(s.state.topoMap.ShardSet()).
+		SetReplicas(3).
+		SetHostShardSets(hostShardSets)
+	m = topology.NewStaticMap(opts)
+	wState.topoMap = m
+	s.state.topoMap = m // update the topology manually after replace node.
+
+	wState.shardsLeavingAndInitiazingCountTowardsConsistency = LeavingAndInitializingFlag
 }
 
 // utils
 
 func getWriteState(s *session, w writeStub) *writeState {
 	wState := s.pools.writeState.Get()
+	wState.hostSucessMap = make(map[string]bool)
 	s.state.RLock()
 	wState.consistencyLevel = s.state.writeLevel
 	wState.topoMap = s.state.topoMap
@@ -179,6 +225,22 @@ func setShardStates(t *testing.T, s *session, host topology.Host, state shard.St
 
 	for _, hostShard := range hostShardSet.ShardSet().All() {
 		hostShard.SetState(state)
+	}
+}
+
+func replaceHost(t *testing.T, s *session, leavingHost topology.Host, initializingHost topology.Host) {
+	s.state.RLock()
+	leavingHostShardSet, ok := s.state.topoMap.LookupHostShardSet(leavingHost.ID())
+	initializingHostShardSet, ok := s.state.topoMap.LookupHostShardSet(initializingHost.ID())
+	s.state.RUnlock()
+	require.True(t, ok)
+
+	for _, leavinghostShard := range leavingHostShardSet.ShardSet().All() {
+		leavinghostShard.SetState(shard.Leaving)
+	}
+	for _, initializinghostShard := range initializingHostShardSet.ShardSet().All() {
+		initializinghostShard.SetState(shard.Initializing)
+		initializinghostShard.SetSourceID(leavingHost.ID())
 	}
 }
 
@@ -210,7 +272,6 @@ func writeTestSetup(t *testing.T, writeWg *sync.WaitGroup) (*writeState, *sessio
 	wState := getWriteState(s, w)
 	wState.incRef() // for the test
 	wState.incRef() // allow introspection
-
 	// Begin write
 	writeWg.Add(1)
 	go func() {
@@ -223,7 +284,7 @@ func writeTestSetup(t *testing.T, writeWg *sync.WaitGroup) (*writeState, *sessio
 	enqueueWg.Wait()
 	require.True(t, s.state.topoMap.Replicas() == sessionTestReplicas)
 	for i := 0; i < s.state.topoMap.Replicas(); i++ {
-		completionFn(hosts[0], nil) // maintain session state
+		completionFn(hosts[i], nil) // maintain session state
 	}
 
 	return wState, s, hosts

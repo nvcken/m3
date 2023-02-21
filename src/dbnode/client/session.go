@@ -1394,6 +1394,7 @@ func (s *session) writeAttemptWithRLock(
 	state.shardsLeavingCountTowardsConsistency = s.shardsLeavingCountTowardsConsistency
 	state.shardsLeavingAndInitiazingCountTowardsConsistency = s.shardsLeavingAndInitiazingCountTowardsConsistency
 	state.topoMap = s.state.topoMap
+	state.hostSucessMap = make(map[string]bool)
 	state.incRef()
 
 	// todo@bl: Can we combine the writeOpPool and the writeStatePool?
@@ -1412,6 +1413,9 @@ func (s *session) writeAttemptWithRLock(
 			// depending on your config initializing shards won't count
 			// towards quorum, current defaults, so this is ok consistency wise).
 			return
+		}
+		if hostShard.State() == shard.Initializing || hostShard.State() == shard.Leaving {
+			state.hostSucessMap[host.ID()] = false
 		}
 
 		// Count pending write requests before we enqueue the completion fns,
