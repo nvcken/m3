@@ -21,8 +21,6 @@
 package topology
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/m3db/m3/src/cluster/shard"
 	"github.com/m3db/m3/src/dbnode/sharding"
 	"github.com/m3db/m3/src/x/ident"
@@ -85,13 +83,6 @@ func NewStaticMap(opts StaticOptions) Map {
 		}
 		topoMap.leavingHostMap[host.ID()] = shardIDToLeavingHost
 	}
-
-	map1, _ := json.Marshal(topoMap.leavingHostMap)
-	fmt.Println("replace node leavingHostMap " + string(map1))
-
-	map2, _ := json.Marshal(topoMap.initializingHostMap)
-	fmt.Println("replace node initializingHostMap " + string(map2))
-
 	return &topoMap
 }
 
