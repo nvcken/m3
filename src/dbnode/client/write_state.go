@@ -33,6 +33,18 @@ import (
 	"github.com/m3db/m3/src/x/serialize"
 )
 
+type shardStatus int64
+
+const (
+	Undefined shardStatus = iota
+	Available
+	Leaving
+	Initializing
+	ShardLeavingAndLeavingCountsIndividually
+	ShardLeavingAndLeavingCountsAsPair
+	ShardInitializingAndInitializingCountsAsPair
+)
+
 // writeOp represents a generic write operation
 type writeOp interface {
 	op
@@ -139,55 +151,49 @@ func (w *writeState) completionFn(result interface{}, err error) {
 		errStr := "missing shard %d in host %s"
 		wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
 	} else {
-		available := shardState == shard.Available
-		leaving := shardState == shard.Leaving
-		leavingAndShardsLeavingCountTowardsConsistency := leaving &&
-			w.shardsLeavingCountTowardsConsistency
 		// NB(bl): Only count writes to available shards towards success.
 		// NB(r): If shard is leaving and configured to allow writes to leaving
 		// shards to count towards consistency then allow that to count
-		// to success.
-		if !available && !leavingAndShardsLeavingCountTowardsConsistency && !w.shardsLeavingAndInitiazingCountTowardsConsistency {
-			var errStr string
-			switch shardState {
-			case shard.Initializing:
-				errStr = "shard %d in host %s is not available (initializing)"
-			case shard.Leaving:
-				errStr = "shard %d in host %s not available (leaving)"
-			default:
-				errStr = "shard %d in host %s not available (unknown state)"
-			}
-			wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
-		} else if !available && w.shardsLeavingAndInitiazingCountTowardsConsistency {
-			var errStr string
-			switch shardState {
-			case shard.Initializing:
-				pairedHostID, ok := w.topoMap.LookupLeavingHost(hostID, w.op.ShardID())
-				if !ok {
-					errStr = "shard %d in host %s has no leaving shard"
-					wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
-				} else {
-					if w.hostSucessMap[pairedHostID] {
-						w.success++
-					}
-					w.hostSucessMap[hostID] = true
-				}
-			case shard.Leaving:
-				pairedHostID, ok := w.topoMap.LookupInitializingHost(hostID, w.op.ShardID())
-				if !ok {
-					errStr = "shard %d in host %s has no initializing shard"
-					wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
-				} else {
-					if w.hostSucessMap[pairedHostID] {
-						w.success++
-					}
-					w.hostSucessMap[hostID] = true
-				}
-			default:
-				errStr = "shard %d in host %s not available (unknown state)"
-			}
-		} else {
+		// to success
+		// If shardsLeavingAndInitiazingCountTowardsConsistency is true then write to both leaving and initializing
+
+		var errStr string
+		switch getShardState(shardState, w.shardsLeavingCountTowardsConsistency, w.shardsLeavingAndInitiazingCountTowardsConsistency) {
+		case Available:
 			w.success++
+		case ShardLeavingAndLeavingCountsIndividually:
+			w.success++
+		case ShardLeavingAndLeavingCountsAsPair:
+			InitializingHostID, ok := w.topoMap.LookupInitializingHost(hostID, w.op.ShardID())
+			if !ok {
+				errStr = "shard %d in host %s has no initializing shard"
+				wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+			} else {
+				if w.hostSucessMap[InitializingHostID] {
+					w.success++
+				}
+				w.hostSucessMap[hostID] = true
+			}
+		case ShardInitializingAndInitializingCountsAsPair:
+			leavingHostID, ok := w.topoMap.LookupLeavingHost(hostID, w.op.ShardID())
+			if !ok {
+				errStr = "shard %d in host %s has no leaving shard"
+				wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+			} else {
+				if w.hostSucessMap[leavingHostID] {
+					w.success++
+				}
+				w.hostSucessMap[hostID] = true
+			}
+		case Leaving:
+			errStr = "shard %d in host %s not available (leaving)"
+			wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+		case Initializing:
+			errStr = "shard %d in host %s is not available (initializing)"
+			wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+		default:
+			errStr = "shard %d in host %s not available (unknown state)"
+			wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
 		}
 	}
 
@@ -242,4 +248,31 @@ func (p *writeStatePool) Get() *writeState {
 
 func (p *writeStatePool) Put(w *writeState) {
 	p.pool.Put(w)
+}
+
+func getShardState(shardState shard.State, leavingCountsIndividually bool, leavingAndInitializingCountsAsPair bool) shardStatus {
+
+	available := shardState == shard.Available
+	leaving := shardState == shard.Leaving
+	initializing := shardState == shard.Initializing
+
+	if available {
+		return Available
+	}
+	if leaving && leavingCountsIndividually {
+		return ShardLeavingAndLeavingCountsIndividually
+	}
+	if leaving && leavingAndInitializingCountsAsPair {
+		return ShardLeavingAndLeavingCountsAsPair
+	}
+	if initializing && leavingAndInitializingCountsAsPair {
+		return ShardInitializingAndInitializingCountsAsPair
+	}
+	if leaving {
+		return Leaving
+	}
+	if initializing {
+		return Initializing
+	}
+	return Undefined
 }

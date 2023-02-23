@@ -105,8 +105,8 @@ func (t *staticMap) LookupLeavingHost(hostID string, id uint32) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	parentHost, ok := value[id]
-	return parentHost, ok
+	leavingHost, ok := value[id]
+	return leavingHost, ok
 }
 
 func (t *staticMap) LookupInitializingHost(hostID string, id uint32) (string, bool) {
@@ -114,8 +114,8 @@ func (t *staticMap) LookupInitializingHost(hostID string, id uint32) (string, bo
 	if !ok {
 		return "", false
 	}
-	childHost, ok := value[id]
-	return childHost, ok
+	initializingHost, ok := value[id]
+	return initializingHost, ok
 }
 
 func (t *staticMap) LookupHostShardSet(id string) (HostShardSet, bool) {
