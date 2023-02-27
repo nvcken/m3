@@ -232,72 +232,72 @@ var (
 )
 
 type options struct {
-	runtimeOptsMgr                                    m3dbruntime.OptionsManager
-	clockOpts                                         clock.Options
-	instrumentOpts                                    instrument.Options
-	logErrorSampleRate                                sampler.Rate
-	topologyInitializer                               topology.Initializer
-	readConsistencyLevel                              topology.ReadConsistencyLevel
-	writeConsistencyLevel                             topology.ConsistencyLevel
-	bootstrapConsistencyLevel                         topology.ReadConsistencyLevel
-	channelOptions                                    *tchannel.ChannelOptions
-	maxConnectionCount                                int
-	minConnectionCount                                int
-	hostConnectTimeout                                time.Duration
-	clusterConnectTimeout                             time.Duration
-	clusterConnectConsistencyLevel                    topology.ConnectConsistencyLevel
-	writeRequestTimeout                               time.Duration
-	fetchRequestTimeout                               time.Duration
-	truncateRequestTimeout                            time.Duration
-	backgroundConnectInterval                         time.Duration
-	backgroundConnectStutter                          time.Duration
-	backgroundHealthCheckInterval                     time.Duration
-	backgroundHealthCheckStutter                      time.Duration
-	backgroundHealthCheckFailLimit                    int
-	backgroundHealthCheckFailThrottleFactor           float64
-	tagEncoderOpts                                    serialize.TagEncoderOptions
-	tagEncoderPoolSize                                pool.Size
-	tagDecoderOpts                                    serialize.TagDecoderOptions
-	tagDecoderPoolSize                                pool.Size
-	writeRetrier                                      xretry.Retrier
-	fetchRetrier                                      xretry.Retrier
-	streamBlocksRetrier                               xretry.Retrier
-	writeShardsInitializing                           bool
-	shardsLeavingCountTowardsConsistency              bool
-	shardsLeavingAndInitiazingCountTowardsConsistency bool
-	newConnectionFn                                   NewConnectionFn
-	readerIteratorAllocate                            encoding.ReaderIteratorAllocate
-	writeOperationPoolSize                            pool.Size
-	writeTaggedOperationPoolSize                      pool.Size
-	fetchBatchOpPoolSize                              pool.Size
-	writeBatchSize                                    int
-	fetchBatchSize                                    int
-	checkedBytesPool                                  pool.CheckedBytesPool
-	identifierPool                                    ident.Pool
-	hostQueueOpsFlushSize                             int
-	hostQueueOpsFlushInterval                         time.Duration
-	hostQueueOpsArrayPoolSize                         pool.Size
-	hostQueueNewPooledWorkerFn                        xsync.NewPooledWorkerFn
-	hostQueueEmitsHealthStatus                        bool
-	seriesIteratorPoolSize                            pool.Size
-	checkedBytesWrapperPoolSize                       pool.Size
-	contextPool                                       context.Pool
-	origin                                            topology.Host
-	fetchSeriesBlocksMaxBlockRetries                  int
-	fetchSeriesBlocksBatchSize                        int
-	fetchSeriesBlocksMetadataBatchTimeout             time.Duration
-	fetchSeriesBlocksBatchTimeout                     time.Duration
-	fetchSeriesBlocksBatchConcurrency                 int
-	schemaRegistry                                    namespace.SchemaRegistry
-	isProtoEnabled                                    bool
-	asyncTopologyInitializers                         []topology.Initializer
-	asyncWriteWorkerPool                              xsync.PooledWorkerPool
-	asyncWriteMaxConcurrency                          int
-	useV2BatchAPIs                                    bool
-	iterationOptions                                  index.IterationOptions
-	writeTimestampOffset                              time.Duration
-	namespaceInitializer                              namespace.Initializer
-	thriftContextFn                                   ThriftContextFn
+	runtimeOptsMgr                                      m3dbruntime.OptionsManager
+	clockOpts                                           clock.Options
+	instrumentOpts                                      instrument.Options
+	logErrorSampleRate                                  sampler.Rate
+	topologyInitializer                                 topology.Initializer
+	readConsistencyLevel                                topology.ReadConsistencyLevel
+	writeConsistencyLevel                               topology.ConsistencyLevel
+	bootstrapConsistencyLevel                           topology.ReadConsistencyLevel
+	channelOptions                                      *tchannel.ChannelOptions
+	maxConnectionCount                                  int
+	minConnectionCount                                  int
+	hostConnectTimeout                                  time.Duration
+	clusterConnectTimeout                               time.Duration
+	clusterConnectConsistencyLevel                      topology.ConnectConsistencyLevel
+	writeRequestTimeout                                 time.Duration
+	fetchRequestTimeout                                 time.Duration
+	truncateRequestTimeout                              time.Duration
+	backgroundConnectInterval                           time.Duration
+	backgroundConnectStutter                            time.Duration
+	backgroundHealthCheckInterval                       time.Duration
+	backgroundHealthCheckStutter                        time.Duration
+	backgroundHealthCheckFailLimit                      int
+	backgroundHealthCheckFailThrottleFactor             float64
+	tagEncoderOpts                                      serialize.TagEncoderOptions
+	tagEncoderPoolSize                                  pool.Size
+	tagDecoderOpts                                      serialize.TagDecoderOptions
+	tagDecoderPoolSize                                  pool.Size
+	writeRetrier                                        xretry.Retrier
+	fetchRetrier                                        xretry.Retrier
+	streamBlocksRetrier                                 xretry.Retrier
+	writeShardsInitializing                             bool
+	shardsLeavingCountTowardsConsistency                bool
+	ShardsLeavingAndInitializingCountTowardsConsistency bool
+	newConnectionFn                                     NewConnectionFn
+	readerIteratorAllocate                              encoding.ReaderIteratorAllocate
+	writeOperationPoolSize                              pool.Size
+	writeTaggedOperationPoolSize                        pool.Size
+	fetchBatchOpPoolSize                                pool.Size
+	writeBatchSize                                      int
+	fetchBatchSize                                      int
+	checkedBytesPool                                    pool.CheckedBytesPool
+	identifierPool                                      ident.Pool
+	hostQueueOpsFlushSize                               int
+	hostQueueOpsFlushInterval                           time.Duration
+	hostQueueOpsArrayPoolSize                           pool.Size
+	hostQueueNewPooledWorkerFn                          xsync.NewPooledWorkerFn
+	hostQueueEmitsHealthStatus                          bool
+	seriesIteratorPoolSize                              pool.Size
+	checkedBytesWrapperPoolSize                         pool.Size
+	contextPool                                         context.Pool
+	origin                                              topology.Host
+	fetchSeriesBlocksMaxBlockRetries                    int
+	fetchSeriesBlocksBatchSize                          int
+	fetchSeriesBlocksMetadataBatchTimeout               time.Duration
+	fetchSeriesBlocksBatchTimeout                       time.Duration
+	fetchSeriesBlocksBatchConcurrency                   int
+	schemaRegistry                                      namespace.SchemaRegistry
+	isProtoEnabled                                      bool
+	asyncTopologyInitializers                           []topology.Initializer
+	asyncWriteWorkerPool                                xsync.PooledWorkerPool
+	asyncWriteMaxConcurrency                            int
+	useV2BatchAPIs                                      bool
+	iterationOptions                                    index.IterationOptions
+	writeTimestampOffset                                time.Duration
+	namespaceInitializer                                namespace.Initializer
+	thriftContextFn                                     ThriftContextFn
 }
 
 // NewOptions creates a new set of client options with defaults
@@ -392,62 +392,62 @@ func newOptions() *options {
 	}
 
 	opts := &options{
-		clockOpts:                                         clock.NewOptions(),
-		instrumentOpts:                                    instrument.NewOptions(),
-		channelOptions:                                    defaultChannelOptions,
-		writeConsistencyLevel:                             defaultWriteConsistencyLevel,
-		readConsistencyLevel:                              defaultReadConsistencyLevel,
-		bootstrapConsistencyLevel:                         defaultBootstrapConsistencyLevel,
-		maxConnectionCount:                                defaultMaxConnectionCount,
-		minConnectionCount:                                defaultMinConnectionCount,
-		hostConnectTimeout:                                defaultHostConnectTimeout,
-		clusterConnectTimeout:                             defaultClusterConnectTimeout,
-		clusterConnectConsistencyLevel:                    defaultClusterConnectConsistencyLevel,
-		writeRequestTimeout:                               defaultWriteRequestTimeout,
-		fetchRequestTimeout:                               defaultFetchRequestTimeout,
-		truncateRequestTimeout:                            defaultTruncateRequestTimeout,
-		backgroundConnectInterval:                         defaultBackgroundConnectInterval,
-		backgroundConnectStutter:                          defaultBackgroundConnectStutter,
-		backgroundHealthCheckInterval:                     defaultBackgroundHealthCheckInterval,
-		backgroundHealthCheckStutter:                      defaultBackgroundHealthCheckStutter,
-		backgroundHealthCheckFailLimit:                    defaultBackgroundHealthCheckFailLimit,
-		backgroundHealthCheckFailThrottleFactor:           defaultBackgroundHealthCheckFailThrottleFactor,
-		writeRetrier:                                      defaultWriteRetrier,
-		fetchRetrier:                                      defaultFetchRetrier,
-		writeShardsInitializing:                           defaultWriteShardsInitializing,
-		shardsLeavingCountTowardsConsistency:              defaultShardsLeavingCountTowardsConsistency,
-		shardsLeavingAndInitiazingCountTowardsConsistency: defaultShardsLeavingAndInitiazingCountTowardsConsistency,
-		tagEncoderPoolSize:                                defaultTagEncoderPoolSize,
-		tagEncoderOpts:                                    serialize.NewTagEncoderOptions(),
-		tagDecoderPoolSize:                                defaultTagDecoderPoolSize,
-		tagDecoderOpts:                                    serialize.NewTagDecoderOptions(serialize.TagDecoderOptionsConfig{}),
-		streamBlocksRetrier:                               defaultStreamBlocksRetrier,
-		newConnectionFn:                                   defaultNewConnectionFn,
-		writeOperationPoolSize:                            defaultWriteOpPoolSize,
-		writeTaggedOperationPoolSize:                      defaultWriteTaggedOpPoolSize,
-		fetchBatchOpPoolSize:                              defaultFetchBatchOpPoolSize,
-		writeBatchSize:                                    DefaultWriteBatchSize,
-		fetchBatchSize:                                    defaultFetchBatchSize,
-		checkedBytesPool:                                  bytesPool,
-		identifierPool:                                    idPool,
-		hostQueueOpsFlushSize:                             defaultHostQueueOpsFlushSize,
-		hostQueueOpsFlushInterval:                         defaultHostQueueOpsFlushInterval,
-		hostQueueOpsArrayPoolSize:                         defaultHostQueueOpsArrayPoolSize,
-		hostQueueNewPooledWorkerFn:                        hostQueueNewPooledWorkerFn,
-		hostQueueEmitsHealthStatus:                        defaultHostQueueEmitsHealthStatus,
-		seriesIteratorPoolSize:                            defaultSeriesIteratorPoolSize,
-		checkedBytesWrapperPoolSize:                       defaultCheckedBytesWrapperPoolSize,
-		contextPool:                                       contextPool,
-		fetchSeriesBlocksMaxBlockRetries:                  defaultFetchSeriesBlocksMaxBlockRetries,
-		fetchSeriesBlocksBatchSize:                        defaultFetchSeriesBlocksBatchSize,
-		fetchSeriesBlocksMetadataBatchTimeout:             defaultFetchSeriesBlocksMetadataBatchTimeout,
-		fetchSeriesBlocksBatchTimeout:                     defaultFetchSeriesBlocksBatchTimeout,
-		fetchSeriesBlocksBatchConcurrency:                 defaultFetchSeriesBlocksBatchConcurrency,
-		schemaRegistry:                                    namespace.NewSchemaRegistry(false, nil),
-		asyncTopologyInitializers:                         []topology.Initializer{},
-		asyncWriteMaxConcurrency:                          defaultAsyncWriteMaxConcurrency,
-		useV2BatchAPIs:                                    defaultUseV2BatchAPIs,
-		thriftContextFn:                                   defaultThriftContextFn,
+		clockOpts:                                           clock.NewOptions(),
+		instrumentOpts:                                      instrument.NewOptions(),
+		channelOptions:                                      defaultChannelOptions,
+		writeConsistencyLevel:                               defaultWriteConsistencyLevel,
+		readConsistencyLevel:                                defaultReadConsistencyLevel,
+		bootstrapConsistencyLevel:                           defaultBootstrapConsistencyLevel,
+		maxConnectionCount:                                  defaultMaxConnectionCount,
+		minConnectionCount:                                  defaultMinConnectionCount,
+		hostConnectTimeout:                                  defaultHostConnectTimeout,
+		clusterConnectTimeout:                               defaultClusterConnectTimeout,
+		clusterConnectConsistencyLevel:                      defaultClusterConnectConsistencyLevel,
+		writeRequestTimeout:                                 defaultWriteRequestTimeout,
+		fetchRequestTimeout:                                 defaultFetchRequestTimeout,
+		truncateRequestTimeout:                              defaultTruncateRequestTimeout,
+		backgroundConnectInterval:                           defaultBackgroundConnectInterval,
+		backgroundConnectStutter:                            defaultBackgroundConnectStutter,
+		backgroundHealthCheckInterval:                       defaultBackgroundHealthCheckInterval,
+		backgroundHealthCheckStutter:                        defaultBackgroundHealthCheckStutter,
+		backgroundHealthCheckFailLimit:                      defaultBackgroundHealthCheckFailLimit,
+		backgroundHealthCheckFailThrottleFactor:             defaultBackgroundHealthCheckFailThrottleFactor,
+		writeRetrier:                                        defaultWriteRetrier,
+		fetchRetrier:                                        defaultFetchRetrier,
+		writeShardsInitializing:                             defaultWriteShardsInitializing,
+		shardsLeavingCountTowardsConsistency:                defaultShardsLeavingCountTowardsConsistency,
+		ShardsLeavingAndInitializingCountTowardsConsistency: defaultShardsLeavingAndInitiazingCountTowardsConsistency,
+		tagEncoderPoolSize:                                  defaultTagEncoderPoolSize,
+		tagEncoderOpts:                                      serialize.NewTagEncoderOptions(),
+		tagDecoderPoolSize:                                  defaultTagDecoderPoolSize,
+		tagDecoderOpts:                                      serialize.NewTagDecoderOptions(serialize.TagDecoderOptionsConfig{}),
+		streamBlocksRetrier:                                 defaultStreamBlocksRetrier,
+		newConnectionFn:                                     defaultNewConnectionFn,
+		writeOperationPoolSize:                              defaultWriteOpPoolSize,
+		writeTaggedOperationPoolSize:                        defaultWriteTaggedOpPoolSize,
+		fetchBatchOpPoolSize:                                defaultFetchBatchOpPoolSize,
+		writeBatchSize:                                      DefaultWriteBatchSize,
+		fetchBatchSize:                                      defaultFetchBatchSize,
+		checkedBytesPool:                                    bytesPool,
+		identifierPool:                                      idPool,
+		hostQueueOpsFlushSize:                               defaultHostQueueOpsFlushSize,
+		hostQueueOpsFlushInterval:                           defaultHostQueueOpsFlushInterval,
+		hostQueueOpsArrayPoolSize:                           defaultHostQueueOpsArrayPoolSize,
+		hostQueueNewPooledWorkerFn:                          hostQueueNewPooledWorkerFn,
+		hostQueueEmitsHealthStatus:                          defaultHostQueueEmitsHealthStatus,
+		seriesIteratorPoolSize:                              defaultSeriesIteratorPoolSize,
+		checkedBytesWrapperPoolSize:                         defaultCheckedBytesWrapperPoolSize,
+		contextPool:                                         contextPool,
+		fetchSeriesBlocksMaxBlockRetries:                    defaultFetchSeriesBlocksMaxBlockRetries,
+		fetchSeriesBlocksBatchSize:                          defaultFetchSeriesBlocksBatchSize,
+		fetchSeriesBlocksMetadataBatchTimeout:               defaultFetchSeriesBlocksMetadataBatchTimeout,
+		fetchSeriesBlocksBatchTimeout:                       defaultFetchSeriesBlocksBatchTimeout,
+		fetchSeriesBlocksBatchConcurrency:                   defaultFetchSeriesBlocksBatchConcurrency,
+		schemaRegistry:                                      namespace.NewSchemaRegistry(false, nil),
+		asyncTopologyInitializers:                           []topology.Initializer{},
+		asyncWriteMaxConcurrency:                            defaultAsyncWriteMaxConcurrency,
+		useV2BatchAPIs:                                      defaultUseV2BatchAPIs,
+		thriftContextFn:                                     defaultThriftContextFn,
 	}
 	return opts.SetEncodingM3TSZ().(*options)
 }
@@ -777,7 +777,7 @@ func (o *options) SetShardsLeavingCountTowardsConsistency(value bool) Options {
 
 func (o *options) SetShardsLeavingAndInitiazingCountTowardsConsistency(value bool) Options {
 	opts := *o
-	opts.shardsLeavingAndInitiazingCountTowardsConsistency = value
+	opts.ShardsLeavingAndInitializingCountTowardsConsistency = value
 	return &opts
 }
 
@@ -785,8 +785,8 @@ func (o *options) ShardsLeavingCountTowardsConsistency() bool {
 	return o.shardsLeavingCountTowardsConsistency
 }
 
-func (o *options) ShardsLeavingAndInitiazingCountTowardsConsistency() bool {
-	return o.shardsLeavingAndInitiazingCountTowardsConsistency
+func (o *options) ShardsLeavingAndInitializingCountTowardsConsistency() bool {
+	return o.ShardsLeavingAndInitializingCountTowardsConsistency
 }
 
 func (o *options) SetTagEncoderOptions(value serialize.TagEncoderOptions) Options {

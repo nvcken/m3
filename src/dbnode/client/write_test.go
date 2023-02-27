@@ -190,7 +190,7 @@ func setupShardLeavingAndInitializingCountTowardsConsistency(t *testing.T, wStat
 	wState.topoMap = m
 	s.state.topoMap = m // update the topology manually after replace node.
 
-	wState.shardsLeavingAndInitiazingCountTowardsConsistency = LeavingAndInitializingFlag
+	wState.ShardsLeavingAndInitializingCountTowardsConsistency = LeavingAndInitializingFlag
 }
 
 // utils

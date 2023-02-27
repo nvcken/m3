@@ -61,19 +61,19 @@ type writeState struct {
 	sync.Mutex
 	refCounter
 
-	consistencyLevel                                  topology.ConsistencyLevel
-	shardsLeavingCountTowardsConsistency              bool
-	shardsLeavingAndInitiazingCountTowardsConsistency bool
-	topoMap                                           topology.Map
-	hostSucessMap                                     map[string]bool
-	op                                                writeOp
-	nsID                                              ident.ID
-	tsID                                              ident.ID
-	tagEncoder                                        serialize.TagEncoder
-	annotation                                        checked.Bytes
-	majority, pending                                 int32
-	success                                           int32
-	errors                                            []error
+	consistencyLevel                                    topology.ConsistencyLevel
+	shardsLeavingCountTowardsConsistency                bool
+	ShardsLeavingAndInitializingCountTowardsConsistency bool
+	topoMap                                             topology.Map
+	hostSucessMap                                       map[string]bool
+	op                                                  writeOp
+	nsID                                                ident.ID
+	tsID                                                ident.ID
+	tagEncoder                                          serialize.TagEncoder
+	annotation                                          checked.Bytes
+	majority, pending                                   int32
+	success                                             int32
+	errors                                              []error
 
 	queues         []hostQueue
 	tagEncoderPool serialize.TagEncoderPool
@@ -155,10 +155,10 @@ func (w *writeState) completionFn(result interface{}, err error) {
 		// NB(r): If shard is leaving and configured to allow writes to leaving
 		// shards to count towards consistency then allow that to count
 		// to success
-		// If shardsLeavingAndInitiazingCountTowardsConsistency is true then write to both leaving and initializing
+		// If ShardsLeavingAndInitializingCountTowardsConsistency is true then write to both leaving and initializing
 
 		var errStr string
-		switch getShardState(shardState, w.shardsLeavingCountTowardsConsistency, w.shardsLeavingAndInitiazingCountTowardsConsistency) {
+		switch getShardState(shardState, w.shardsLeavingCountTowardsConsistency, w.ShardsLeavingAndInitializingCountTowardsConsistency) {
 		case Available:
 			w.success++
 		case ShardLeavingAndLeavingCountsIndividually:

@@ -118,9 +118,9 @@ type Configuration struct {
 	// count towards consistency, by default they do not.
 	ShardsLeavingCountTowardsConsistency *bool `yaml:"shardsLeavingCountTowardsConsistency"`
 
-	// ShardsLeavingAndInitiazingCountTowardsConsistency sets whether or not writes to leaving and initializing shards
+	// ShardsLeavingAndInitializingCountTowardsConsistency sets whether or not writes to leaving and initializing shards
 	// count towards consistency, by default they do not.
-	ShardsLeavingAndInitiazingCountTowardsConsistency *bool `yaml:"shardsLeavingAndInitiazingCountTowardsConsistency"`
+	ShardsLeavingAndInitializingCountTowardsConsistency *bool `yaml:"ShardsLeavingAndInitializingCountTowardsConsistency"`
 
 	// IterateEqualTimestampStrategy specifies the iterate equal timestamp strategy.
 	IterateEqualTimestampStrategy *encoding.IterateEqualTimestampStrategy `yaml:"iterateEqualTimestampStrategy"`
@@ -211,9 +211,9 @@ func (c *Configuration) Validate() error {
 			*c.AsyncWriteMaxConcurrency)
 	}
 
-	if c.ShardsLeavingCountTowardsConsistency != nil && c.ShardsLeavingAndInitiazingCountTowardsConsistency != nil &&
-		*c.ShardsLeavingCountTowardsConsistency && *c.ShardsLeavingAndInitiazingCountTowardsConsistency {
-		return fmt.Errorf("m3db client cannot have both ShardsLeavingCountTowardsConsistency and ShardsLeavingAndInitiazingCountTowardsConsistency as true")
+	if c.ShardsLeavingCountTowardsConsistency != nil && c.ShardsLeavingAndInitializingCountTowardsConsistency != nil &&
+		*c.ShardsLeavingCountTowardsConsistency && *c.ShardsLeavingAndInitializingCountTowardsConsistency {
+		return fmt.Errorf("m3db client cannot have both ShardsLeavingCountTowardsConsistency and ShardsLeavingAndInitializingCountTowardsConsistency as true")
 	}
 
 	if err := c.Proto.Validate(); err != nil {
@@ -452,8 +452,8 @@ func (c Configuration) NewAdminClient(
 	if c.WriteShardsInitializing != nil {
 		v = v.SetWriteShardsInitializing(*c.WriteShardsInitializing)
 	}
-	if c.ShardsLeavingAndInitiazingCountTowardsConsistency != nil {
-		v = v.SetShardsLeavingAndInitiazingCountTowardsConsistency(*c.ShardsLeavingAndInitiazingCountTowardsConsistency)
+	if c.ShardsLeavingAndInitializingCountTowardsConsistency != nil {
+		v = v.SetShardsLeavingAndInitiazingCountTowardsConsistency(*c.ShardsLeavingAndInitializingCountTowardsConsistency)
 	}
 
 	if c.ShardsLeavingCountTowardsConsistency != nil {
